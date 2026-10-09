@@ -5,10 +5,13 @@ import matplotlib.animation as animation
 import matplotlib.dates as mdates
 
 # ==========================================
-# 1. DATA LOADING & PREPROCESSING
+# 1. DATA LOADING & PREPROCESSING FROM GITHUB
 # ==========================================
-# Load the dataset
-df = pd.read_csv("AirQualityUCI.csv", sep=";", decimal=",")
+# REPLACE THIS LINK with your actual GitHub Raw link
+github_url = "https://raw.githubusercontent.com/username/repository/main/AirQualityUCI.csv"
+
+print("Downloading dataset from GitHub...")
+df = pd.read_csv(github_url, sep=";", decimal=",")
 
 # Drop empty rows and columns, and handle missing values (-200)
 df = df.dropna(how='all', axis=1).dropna(how='all', axis=0)
@@ -29,7 +32,7 @@ ax.set_title("Motion: CO(GT) Concentration Changing Over Time", fontsize=14)
 ax.set_xlabel("Date & Time", fontsize=12)
 ax.set_ylabel("CO(GT) Concentration", fontsize=12)
 
-# Format the X-axis to show dates nicely (e.g., 10-Mar 18:00)
+# Format the X-axis to show dates nicely
 ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%b %H:%M'))
 plt.xticks(rotation=45)
 
@@ -49,23 +52,16 @@ def init():
 
 def animate(i):
     # This function is called for every frame 'i'
-    # It plots the data from the beginning up to the current frame
     x = df_sample['DateTime'].iloc[:i+1]
     y = df_sample['CO(GT)'].iloc[:i+1]
     line.set_data(x, y)
     return line,
 
-# Create the animation (frames = total rows in sample, interval = speed in ms)
+# Create the animation
 ani = animation.FuncAnimation(fig, animate, init_func=init, 
                               frames=len(df_sample), interval=100, blit=False)
 
 plt.tight_layout()
-
-# ==========================================
-# 4. EXECUTION & SAVING
-# ==========================================
-# UNCOMMENT the line below if you want to save the moving graph as a GIF file
-# ani.save("moving_graph_with_date.gif", writer='pillow')
 
 # Display the moving graph in a pop-up window
 plt.show()
