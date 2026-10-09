@@ -1,0 +1,71 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import matplotlib.dates as mdates
+
+# ==========================================
+# 1. DATA LOADING & PREPROCESSING
+# ==========================================
+# Load the dataset
+df = pd.read_csv("AirQualityUCI.csv", sep=";", decimal=",")
+
+# Drop empty rows and columns, and handle missing values (-200)
+df = df.dropna(how='all', axis=1).dropna(how='all', axis=0)
+df.replace(-200, np.nan, inplace=True)
+df = df.ffill().bfill()
+
+# Create a proper DateTime column by combining 'Date' and 'Time'
+df['DateTime'] = pd.to_datetime(df['Date'] + ' ' + df['Time'], format='%d/%m/%Y %H.%M.%S')
+
+# Take a sample of the first 100 entries for a smooth, visible animation
+df_sample = df.head(100).copy()
+
+# ==========================================
+# 2. SETUP FIGURE FOR ANIMATION
+# ==========================================
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.set_title("Motion: CO(GT) Concentration Changing Over Time", fontsize=14)
+ax.set_xlabel("Date & Time", fontsize=12)
+ax.set_ylabel("CO(GT) Concentration", fontsize=12)
+
+# Format the X-axis to show dates nicely (e.g., 10-Mar 18:00)
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%b %H:%M'))
+plt.xticks(rotation=45)
+
+# Set the limits of the axes based on our data
+ax.set_xlim(df_sample['DateTime'].min(), df_sample['DateTime'].max())
+ax.set_ylim(0, df_sample['CO(GT)'].max() + 1)
+
+# Initialize an empty line that will "move" (update) during the animation
+line, = ax.plot([], [], lw=2, color='crimson', marker='o', markersize=4)
+
+# ==========================================
+# 3. ANIMATION FUNCTIONS
+# ==========================================
+def init():
+    line.set_data([], [])
+    return line,
+
+def animate(i):
+    # This function is called for every frame 'i'
+    # It plots the data from the beginning up to the current frame
+    x = df_sample['DateTime'].iloc[:i+1]
+    y = df_sample['CO(GT)'].iloc[:i+1]
+    line.set_data(x, y)
+    return line,
+
+# Create the animation (frames = total rows in sample, interval = speed in ms)
+ani = animation.FuncAnimation(fig, animate, init_func=init, 
+                              frames=len(df_sample), interval=100, blit=False)
+
+plt.tight_layout()
+
+# ==========================================
+# 4. EXECUTION & SAVING
+# ==========================================
+# UNCOMMENT the line below if you want to save the moving graph as a GIF file
+# ani.save("moving_graph_with_date.gif", writer='pillow')
+
+# Display the moving graph in a pop-up window
+plt.show()
